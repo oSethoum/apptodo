@@ -1,0 +1,68 @@
+package db
+
+import (
+	"context"
+	"{{.Package}}/ent"
+	"log"
+
+	"entgo.io/ent/dialect/sql/schema"
+	{{- if eq .Config.Database "mysql"}}
+	_ "github.com/go-sql-driver/mysql"
+	"database/sql"
+	{{- end}}
+	
+	{{- if eq .Config.Database "sqlite"}}
+	_ "github.com/mattn/go-sqlite3"
+	{{- end}}
+	
+	{{- if eq .Config.Database "postgres"}}
+	"database/sql"
+	_ "github.com/lib/pq"
+	{{- end}}
+)
+
+var Client *ent.Client
+
+func Init() {
+	
+	{{- if eq .Config.Database "sqlite"}}
+	client, err := ent.Open("sqlite3", "file:ent.sqlite?_fk=1")
+	{{- end}}
+
+	{{- if eq .Config.Database "mysql"}}
+	db, err := sql.Open("mysql", "{{index .Config.DBConfig 0}}:{{index .Config.DBConfig 1}}@tcp(localhost:3306)/")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	db.Exec("CREATE DATABASE IF NOT EXISTS ent;")
+	db.Close()
+	client, err := ent.Open("mysql", "{{index .Config.DBConfig 0}}:{{index .Config.DBConfig 1}}@tcp(localhost:3306)/{{index .Config.DBConfig 2}}")
+	{{- end}}
+	
+	{{- if eq .Config.Database "postgres"}}
+	db, err := sql.Open("postgres", "host=127.0.0.1 port=5432 user={{index .Config.DBConfig 0}} password={{index .Config.DBConfig 1}}")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	db.Exec("CREATE DATABASE IF NOT EXISTS ent;")
+	db.Close()
+	client, err := ent.Open("postgres","host=127.0.0.1 port=5432 user={{index .Config.DBConfig 0}} password={{index .Config.DBConfig 1}} dbname={{index .Config.DBConfig 2}}")
+	{{- end}}
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = client.Schema.Create(
+		context.Background(),
+		schema.WithDropColumn(true),
+		schema.WithDropIndex(true),
+		schema.WithGlobalUniqueID(true),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	Client = client
+}

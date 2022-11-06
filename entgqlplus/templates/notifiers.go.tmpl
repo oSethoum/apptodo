@@ -1,0 +1,40 @@
+package {{.Config.GqlGen.Resolver.Package}}
+
+import (
+   "{{.Package}}/{{.Config.GqlGen.Model.Dir}}"
+   "{{.Package}}/ent"
+)
+{{$g := .}}
+{{range .Nodes}}
+{{- if .Subscription}}
+func Notify{{plural .Name}}Listenners(r *mutationResolver, event {{$g.Config.GqlGen.Model.Package}}.Event) {
+	r.{{plural .Name}}ListennersMutext.Lock()
+	for key := range r.{{plural .Name}}Listenners {
+		if event == r.{{plural .Name}}Listenners[key].Event {
+			query := r.{{plural .Name}}Listenners[key].Query
+			if query == nil {
+				query = &{{$g.Config.GqlGen.Model.Package}}.{{plural .Name}}QueryInput{}
+			}
+
+			entities, err := r.Client.{{.Name}}.Query().Paginate(r.{{plural .Name}}Listenners[key].Context, query.After, query.First, query.Before, query.Last, ent.With{{.Name}}Filter(query.Where.Filter), ent.With{{.Name}}Order(query.OrderBy))
+
+			if err == nil {
+				r.{{plural .Name}}Listenners[key].Channel <- entities
+			}
+
+		}
+	}
+	r.{{plural .Name}}ListennersMutext.Unlock()
+}
+
+func Notify{{.Name}}Listenners(r *mutationResolver, event {{$g.Config.GqlGen.Model.Package}}.Event, entity *ent.{{.Name}}) {
+	r.{{.Name}}ListennersMutext.Lock()
+	for key := range r.{{.Name}}Listenners {
+		if event == r.{{.Name}}Listenners[key].Event && r.{{.Name}}Listenners[key].ID == entity.ID {
+			r.{{.Name}}Listenners[key].Channel <- entity
+		}
+	}
+	r.{{.Name}}ListennersMutext.Unlock()
+}
+{{- end}}
+{{end}}

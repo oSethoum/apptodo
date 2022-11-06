@@ -1,0 +1,25 @@
+extend type Query {
+  {{camel .Node.Name}}(id: ID!): {{.Node.Name}}!
+}
+
+extend type Mutation {
+  create{{.Node.Name}}(input: Create{{.Node.Name}}Input!): {{.Node.Name}}!
+  update{{.Node.Name}}(id: ID!, input: Update{{.Node.Name}}Input!): {{.Node.Name}}!
+  delete{{.Node.Name}}(id: ID!): {{.Node.Name}}!
+}
+
+{{- if and .Config.Subscription .Node.Subscription}}
+input {{plural .Node.Name}}QueryInput {
+  after: Cursor
+  first: Int
+  before: Cursor
+  last: Int
+  orderBy: {{.Node.Name}}Order
+  where: {{.Node.Name}}WhereInput
+}
+
+extend type Subscription {
+  {{plural .Node.Name | camel}}(event: Event!, query: {{plural .Node.Name}}QueryInput): {{.Node.Name}}Connection!
+  {{camel .Node.Name}}(event: Event!, id: ID!): {{.Node.Name}}!
+}
+{{- end}}

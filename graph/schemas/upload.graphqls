@@ -1,0 +1,5 @@
+scalar Upload
+
+extend type Mutation {
+  upload(input: Upload!): Boolean!
+}

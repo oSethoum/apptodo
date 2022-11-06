@@ -1,0 +1,51 @@
+package {{.Config.GqlGen.Resolver.Package}}
+
+import (
+	"{{.Package}}/db" 
+	"{{.Package}}/ent"
+	"{{.Package}}/{{.Config.GqlGen.Exec.Dir}}"
+
+	"github.com/99designs/gqlgen/graphql"
+	
+	"sync"
+)
+
+// This file will not be regenerated automatically.
+//
+// It serves as dependency injection for your app, add any dependencies you require here.
+type Resolver struct {
+	Client *ent.Client
+	{{- if .Config.Subscription}}
+	{{range .Nodes}}
+	{{- if .Subscription}}
+	{{.Name}}Listenners        		    map[*chan *ent.{{.Name}}]{{.Name}}Listenner
+	{{.Name}}ListennersMutext 			  sync.Mutex
+	{{plural .Name}}Listenners        map[*chan *ent.{{.Name}}Connection]{{plural .Name}}Listenner
+	{{plural .Name}}ListennersMutext  sync.Mutex
+	{{- end}}
+	{{- end}}
+	{{- end}}
+}
+
+var schema *graphql.ExecutableSchema
+
+func ExecutableSchema() graphql.ExecutableSchema {
+	if schema == nil {
+		schema = new(graphql.ExecutableSchema)
+		*schema = {{.Config.GqlGen.Exec.Package}}.NewExecutableSchema({{.Config.GqlGen.Exec.Package}}.Config{Resolvers: &Resolver{
+			Client: db.Client,
+			{{- if .Config.Subscription}}
+			{{- range .Nodes}}
+			{{- if .Subscription}}
+			{{.Name}}Listenners:        			make(map[*chan *ent.{{.Name}}]{{.Name}}Listenner),
+			{{.Name}}ListennersMutext:  			sync.Mutex{},
+			{{plural .Name}}Listenners:       make(map[*chan *ent.{{.Name}}Connection]{{plural .Name}}Listenner),
+			{{plural .Name}}ListennersMutext: sync.Mutex{},
+			{{- end}}
+			{{- end}}
+			{{- end}}
+		}})
+	}
+
+	return *schema
+}

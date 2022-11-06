@@ -1,0 +1,11 @@
+// Policy defines the privacy policy of the {{.Node.Name}}.
+func ({{.Node.Name}}) Policy() ent.Policy {
+	return privacy.Policy{
+		Mutation: privacy.MutationPolicy{
+			auth.MutationPrivacy("{{.Node.Name}}"),
+		},
+		Query: privacy.QueryPolicy{
+			auth.QueryPrivacy("{{.Node.Name}}"),
+		},
+	}
+}

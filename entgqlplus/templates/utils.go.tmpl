@@ -1,0 +1,24 @@
+package {{.Config.GqlGen.Resolver.Package}}
+
+import (
+	"{{.Package}}/{{.Config.GqlGen.Model.Dir}}"
+)
+
+func RemoveDuplicates(events []{{.Config.GqlGen.Model.Package}}.Event) []{{.Config.GqlGen.Model.Package}}.Event {
+	ev := []{{.Config.GqlGen.Model.Package}}.Event{}
+	for _, e := range events {
+		if !EventIn(e, ev) {
+			ev = append(ev, e)
+		}
+	}
+	return ev
+}
+
+func EventIn(event {{.Config.GqlGen.Model.Package}}.Event, events []{{.Config.GqlGen.Model.Package}}.Event) bool {
+	for _, e := range events {
+		if e == event {
+			return true
+		}
+	}
+	return false
+}
